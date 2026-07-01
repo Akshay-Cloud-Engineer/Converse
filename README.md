@@ -3,7 +3,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/version-0.1.0-blue" alt="Version">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-BSD--2--Clause-blue" alt="License"></a>
-  <a href="https://github.com/Mohammad-Faiz-Cloud-Engineer/Converse/actions"><img src="https://img.shields.io/github/actions/workflow/status/Mohammad-Faiz-Cloud-Engineer/Converse/ci.yml?branch=main&label=CI" alt="CI"></a>
+  <a href="https://github.com/Akshay-Cloud-Engineer/converse/actions"><img src="https://img.shields.io/github/actions/workflow/status/Akshay-Cloud-Engineer/converse/ci.yml?branch=main&label=CI" alt="CI"></a>
   <img src="https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue" alt="Python">
   <img src="https://img.shields.io/badge/tests-152-brightgreen" alt="Tests">
   <img src="https://img.shields.io/badge/lines%20of%20code-1569-brightgreen" alt="Lines of Code">
@@ -34,8 +34,9 @@ You type a sentence. converse sends it to the language model along with your cur
 - **Dry-run mode** - preview without executing (`--dry-run` / `-n`)
 - **Interactive REPL** - keep asking without restarting (`converse` with no query)
 - **Raw shell passthrough** - `!command` in the REPL skips the LLM entirely
+- **Direct execution** - `--exec` / `-x` runs a raw command directly from the CLI, no LLM involved
 - **Configurable** - YAML, JSON, environment variables, or CLI flags
-- **Setup wizard** - interactive configuration on first run or with `--setup`
+- **Setup wizard** - guided configuration with `--setup` (never auto-runs)
 - **Cross-platform** - Windows, Linux, macOS
 
 ## Installation
@@ -45,7 +46,7 @@ You type a sentence. converse sends it to the language model along with your cur
 Install directly from GitHub (no clone needed):
 
 ```bash
-pip install git+https://github.com/Mohammad-Faiz-Cloud-Engineer/Converse.git
+pip install git+https://github.com/Akshay-Cloud-Engineer/converse.git
 ```
 
 After this, `converse` should be on your PATH. If it isn't, use the module form:
@@ -63,8 +64,8 @@ python3 -m converse "query"
 Clone the repo and install for development:
 
 ```bash
-git clone https://github.com/Mohammad-Faiz-Cloud-Engineer/Converse.git
-cd Converse
+git clone https://github.com/Akshay-Cloud-Engineer/converse.git
+cd converse
 pip install -e .
 ```
 
@@ -75,8 +76,8 @@ Editable mode (`-e`) means changes to the source code take effect immediately wi
 Clone and run directly through `python -m`:
 
 ```bash
-git clone https://github.com/Mohammad-Faiz-Cloud-Engineer/Converse.git
-cd Converse
+git clone https://github.com/Akshay-Cloud-Engineer/converse.git
+cd converse
 ```
 
 Then install the dependencies and use the module form:
@@ -93,6 +94,24 @@ python -m converse --setup
 pip3 install httpx rich
 python3 -m converse "list all files"
 python3 -m converse --setup
+```
+
+### Option 4: Manual dependency install
+
+If you cloned the repo and want to run `python -m converse` without a full pip install, just install the runtime dependencies directly:
+
+```bash
+pip install rich httpx
+```
+
+Now run via the module form:
+
+```bash
+# Windows
+python -m converse "query"
+
+# Linux / macOS
+python3 -m converse "query"
 ```
 
 ### Optional dependencies
@@ -136,7 +155,7 @@ python3 -m converse --setup
 
 The wizard walks you through provider selection, API details, and safety preferences, then saves the config to `~/.config/converse/config.json`.
 
-The setup also runs automatically the first time if no configuration file is found.
+The setup wizard only runs when invoked with `--setup`. It never runs automatically.
 
 ### 3. Use it
 
@@ -159,6 +178,14 @@ Dry run: see what would run without actually executing:
 
 ```bash
 converse "delete temporary files" --dry-run
+```
+
+Direct execution (bypass the LLM entirely):
+
+```bash
+converse -x "ls -la"
+converse -x "docker ps"
+converse -x "cat /etc/os-release"
 ```
 
 ---
@@ -243,6 +270,7 @@ Full flag reference:
 | `-t`, `--temperature` | Temperature (default: `0.1`) |
 | `--max-tokens` | Max response tokens (default: `500`) |
 | `--timeout` | Request timeout in seconds (default: `30`) |
+| `-x`, `--exec` | Execute a raw shell command directly, bypassing the LLM |
 | `-n`, `--dry-run` | Preview without executing |
 | `-y`, `--yes` | Auto-confirm all prompts |
 | `--no-stream` | Disable streaming output |
@@ -259,6 +287,7 @@ Run `converse` with no arguments to enter the REPL.
 
 - Type a sentence to translate and execute
 - `!command` runs a raw shell command directly, bypassing the LLM
+- Outside the REPL, use `-x "command"` for the same effect
 - `exit`, `quit`, or `q` to leave
 - Ctrl+D or Ctrl+C also exit
 

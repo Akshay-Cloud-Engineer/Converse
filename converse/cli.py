@@ -12,8 +12,6 @@ from rich import box
 
 from .models import (
     Config,
-    LLMConfig,
-    SafetyConfig,
     LLMResponse,
     RiskLevel,
     Provider,
@@ -31,10 +29,6 @@ CONFIG_SEARCH_PATHS = [
     Path.home() / ".converse.yaml",
     Path.home() / ".converse.json",
 ]
-
-
-def config_exists() -> bool:
-    return any(p.exists() for p in CONFIG_SEARCH_PATHS)
 
 
 def print_info(msg: str) -> None:
@@ -154,14 +148,14 @@ def load_config(args: argparse.Namespace) -> Config:
 
     # Environment variable overrides
     env_map = {
-        "CONVERSE_PROVIDER": ("llm", "provider", lambda v: Provider(v)),
-        "CONVERSE_MODEL": ("llm", "model", lambda v: v),
-        "CONVERSE_BASE_URL": ("llm", "base_url", lambda v: v),
-        "CONVERSE_API_KEY": ("llm", "api_key", lambda v: v),
-        "CONVERSE_TEMPERATURE": ("llm", "temperature", lambda v: float(v)),
-        "CONVERSE_MAX_TOKENS": ("llm", "max_tokens", lambda v: int(v)),
-        "CONVERSE_TIMEOUT": ("llm", "timeout", lambda v: int(v)),
-        "CONVERSE_BLOCKED": ("safety", "blocked_commands", lambda v: v.split(",")),
+        "CONVERSE_PROVIDER": ("llm", "provider", lambda v: Provider(v.strip())),
+        "CONVERSE_MODEL": ("llm", "model", lambda v: v.strip()),
+        "CONVERSE_BASE_URL": ("llm", "base_url", lambda v: v.strip()),
+        "CONVERSE_API_KEY": ("llm", "api_key", lambda v: v.strip()),
+        "CONVERSE_TEMPERATURE": ("llm", "temperature", lambda v: float(v.strip())),
+        "CONVERSE_MAX_TOKENS": ("llm", "max_tokens", lambda v: int(v.strip())),
+        "CONVERSE_TIMEOUT": ("llm", "timeout", lambda v: int(v.strip())),
+        "CONVERSE_BLOCKED": ("safety", "blocked_commands", lambda v: [x.strip() for x in v.split(",")]),
     }
 
     for env_key, (section, attr, transform) in env_map.items():
@@ -271,10 +265,7 @@ def process_query(query: str, config: Config) -> None:
         return
 
     # Step 7: Confirmation
-    needs_confirm = (
-        response.requires_confirmation
-        and response.risk_level in config.safety.require_confirmation
-    )
+    needs_confirm = response.risk_level in config.safety.require_confirmation
 
     if needs_confirm and config.auto_confirm:
         print_warning("Auto-confirm enabled. Executing without confirmation prompt.")
@@ -391,6 +382,8 @@ Examples:
   converse "delete the file old_report.txt" --dry-run
   converse --interactive
   converse -m llama3 -u http://localhost:11434/v1 "list running processes"
+  converse -x "ls -la"
+  converse -x "docker ps"
   echo "restart my computer" | converse -n
 
 Configuration file (searched in order):
@@ -416,6 +409,7 @@ Environment variables:
     parser.add_argument("--no-stream", action="store_true", help="Disable streaming output")
     parser.add_argument("-i", "--interactive", action="store_true", help="Force interactive mode")
     parser.add_argument("--setup", action="store_true", help="Run the interactive setup wizard")
+    parser.add_argument("-x", "--exec", dest="exec_command", help="Execute a raw shell command directly (bypasses LLM)")
     parser.add_argument("--version", action="store_true", help="Show version and exit")
 
     args = parser.parse_args()
@@ -438,17 +432,19 @@ Environment variables:
 
     is_interactive = args.interactive or (not args.query and sys.stdin.isatty())
 
-    if is_interactive and not config_exists() and not args.config:
-        console.print()
-        console.print("[dim]No configuration found. Starting setup wizard...[/]")
-        console.print()
-        from .setup_wizard import run_setup_wizard
+    if args.exec_command:
+        print_success(f"Executing: {args.exec_command}")
+        console.print("─" * 60)
         try:
-            run_setup_wizard()
-        except (EOFError, KeyboardInterrupt):
-            print()
-            print_info("Setup cancelled. Using default configuration.")
-        config = load_config(args)
+            result = run_command(args.exec_command)
+            if result.stdout:
+                console.print(result.stdout)
+            if result.stderr:
+                console.print(f"[red]{result.stderr}[/]")
+        except Exception as e:
+            print_error(f"Execution failed: {e}")
+        console.print("─" * 60)
+        return
 
     if is_interactive:
         interactive_mode(config)
