@@ -13,7 +13,7 @@ class TestLoadConfig:
         args = Namespace(
             config=None, model=None, url=None, provider=None,
             api_key=None, temperature=None, max_tokens=None,
-            timeout=None, dry_run=False, yes=False, no_stream=False,
+            timeout=None, dry_run=False, yes=None, no_stream=False,
         )
         config = load_config(args)
         assert isinstance(config, Config)
@@ -55,7 +55,7 @@ class TestLoadConfig:
         args = Namespace(
             config=None, model=None, url=None, provider=None,
             api_key=None, temperature=None, max_tokens=None,
-            timeout=None, dry_run=False, yes=False, no_stream=False,
+            timeout=None, dry_run=False, yes=None, no_stream=False,
         )
         config = load_config(args)
         assert config.safety.require_confirmation == [RiskLevel.HIGH, RiskLevel.CRITICAL]

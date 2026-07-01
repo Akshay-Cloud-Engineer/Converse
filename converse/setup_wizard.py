@@ -110,6 +110,7 @@ def _save_config(config: Config) -> Path:
             "require_confirmation": [r.value for r in config.safety.require_confirmation],
             "blocked_commands": config.safety.blocked_commands,
         },
+        "auto_confirm": config.auto_confirm,
     }
 
     with open(config_path, "w") as f:
