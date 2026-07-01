@@ -44,7 +44,7 @@ dev = [
     "pytest>=9.1.1",
 ]
 yaml = [
-    "pyyaml>=6.0",
+    "pyyaml>=6.0.3",
 ]
 
 [tool.setuptools.packages.find]
